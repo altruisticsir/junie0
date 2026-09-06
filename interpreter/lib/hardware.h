@@ -19,19 +19,6 @@
 
     #define SYS_FREQ 40000000UL
 
-    /**
-     * @brief Delay; waits
-     * a specified amount of time in
-     * microseconds.
-     * @param us Microseconds
-     * @note Yielding
-     */
-    void delay_us(uint32_t us) {
-        uint32_t ticks = us * (SYS_FREQ / 2000000UL);
-        uint32_t start = _CP0_GET_COUNT();
-        while ((_CP0_GET_COUNT() - start) < ticks);
-    }
-
     enum mode {
         in = 0,
         out

@@ -107,7 +107,7 @@ void env_write(uint8_t byte);
  * @param us Milliseconds
  * @note Yielding
  */
-void delay_ms(uint32_t us) {
+void delay_us(uint32_t us) {
     uint32_t ticks = us * (SYS_FREQ / 2000000UL);
     uint32_t start = _CP0_GET_COUNT();
 
@@ -458,6 +458,12 @@ void env_step() {
                 ? (int)loop_value.number < (int)end.number
                 : (int)loop_value.number <= (int)end.number) {
                 /* Step */
+                while (uart_byte_available()) {
+                    /* Checks if there's an incoming
+                    byte. */
+                    env_write(uart_read_byte());
+                }
+
                 env_step();
                 /* Keep stepping until a tick
                 marker is reached */
