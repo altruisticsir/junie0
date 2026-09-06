@@ -1,0 +1,82 @@
+start: instruction+
+
+?instruction: set_var
+            | reassign_var
+
+            | set_fn
+            | call_fn
+            | return_stmt
+            | core_fn
+
+            | for_lp
+            | while_lp
+
+            | if_stmt
+
+            | negate
+
+            | primary
+
+set_var: "let" SYMBOL "=" (expression | assigned_condition)
+reassign_var: SYMBOL "=" (expression | assigned_condition)
+
+set_fn: "fn" SYMBOL "(" [parameters] ")" block_start instruction* "}"
+    parameters: SYMBOL ("," SYMBOL)*
+    block_start: "{"
+    for_block_start: "{"
+    while_block_start: "{"
+    if_block_start: "{"
+    
+call_fn: SYMBOL "(" [arguments] ")"
+return_fn: SYMBOL "(" [arguments] ")"
+    arguments: expression ("," expression)*
+
+core_fn: SYMBOL ":" SYMBOL "(" [arguments] ")"
+
+return_stmt: "return" expression?
+
+negate: "!" expression
+
+for_lp: for_start "=" expression for_mode expression ")"? for_block_start instruction* "}"
+    for_start: "for" "("? SYMBOL
+    !for_mode: "to" | "with" // Inclusive or not?
+while_lp: while_start "("? condition ")"? while_block_start instruction* "}"
+    while_start: "while"
+    condition: (expression comp expression | expression)
+    assigned_condition: (expression comp expression)
+        !comp: "==" | "!=" | "<=" | ">=" | "<" | ">"
+
+if_stmt: "if" "("? condition ")"? if_block_start instruction* "}"
+
+?expression: expression "+" term -> add
+           | expression "-" term -> sub
+           | term
+           | negate
+?term: term "*" factor -> mul
+     | term "/" factor -> div
+     | term "%" factor -> mod
+     | factor
+
+?factor: primary
+       | return_fn
+
+primary: INT
+       | FLOAT
+       | STRING
+       | SYMBOL
+       | "(" expression ")" -> parens
+       
+
+SYMBOL: /[a-zA-Z_][a-zA-Z0-9_]*/i
+COMMENT: "#" /[^\n]*/x
+
+STRING: ESCAPED_STRING
+
+INT: /-?\d+/
+FLOAT: /-?\d+\.\d+([eE][-+]?\d+)?/
+
+%import common.ESCAPED_STRING
+%import common.WS
+
+%ignore COMMENT
+%ignore WS
