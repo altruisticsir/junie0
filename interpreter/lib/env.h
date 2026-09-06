@@ -95,6 +95,15 @@ void env_init() {
     stack_init(&s);
 }
 
+/**
+ * @brief Polls UART to check for
+ * an incoming byte. If there is one,
+ * then it is written to the program.
+ * @note Mandatory for yielding
+ * functions.
+ */
+void uart_poll();
+
 #ifndef EMULATED
 void env_write(uint8_t byte);
 
@@ -112,13 +121,7 @@ void delay_us(uint32_t us) {
     uint32_t start = _CP0_GET_COUNT();
 
     while ((_CP0_GET_COUNT() - start) < ticks) {
-        while (uart_byte_available()) {
-            /* Checks if there's an incoming
-            byte. This is necessary, so that
-            delays do not disrupt program
-            uploads. */
-            env_write(uart_read_byte());
-        }
+        uart_poll();
     }
 }
 void delay_ms(uint32_t ms) {
@@ -208,6 +211,12 @@ void env_write(uint8_t byte) {
     }
 }
 
+void uart_poll() {
+    while (uart_byte_available()) {
+        env_write(uart_read_byte());
+    }
+}
+
 void env_step() {
     if (writing == true) return; /* Still writing, not running */
     if (byte_index > byte_count) {
@@ -227,7 +236,7 @@ void env_step() {
     switch(byte) {
         case NUMBER: {
             /* Extract and push a number
-            to the stack */
+            to the stack (reads next 4 bytes) */
             float number = extract_number();
 
             #ifdef EMULATED
@@ -457,13 +466,8 @@ void env_step() {
             while ((int)mode.number == 0
                 ? (int)loop_value.number < (int)end.number
                 : (int)loop_value.number <= (int)end.number) {
+                uart_poll();
                 /* Step */
-                while (uart_byte_available()) {
-                    /* Checks if there's an incoming
-                    byte. */
-                    env_write(uart_read_byte());
-                }
-
                 env_step();
                 /* Keep stepping until a tick
                 marker is reached */
@@ -591,6 +595,24 @@ void env_step() {
             #else
                 printf("%d, %d\n", pin, state);
             #endif
+            break;
+        }
+        case ADC_READ: {
+            /*Reads the analog => digital value of a
+            specified channel/pin and pushes the result
+            to the stack. */
+            symbol channel = stack_pop(&s); /* Like pin */
+            symbol result = {0};
+            #ifndef EMULATED
+                /* Get the ADC value of the specified channel/pin */
+                result.number = (float)adc_read((int)channel.number);
+            #else
+                result.number = 0.0f;
+            #endif
+            result.type = NUMBER;
+
+            /* Push the result */
+            stack_push(&s, result);
             break;
         }
         default: { break; }

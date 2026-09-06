@@ -59,6 +59,7 @@ if_stmt: "if" "("? condition ")"? if_block_start instruction* "}"
 
 ?factor: primary
        | return_fn
+       | core_fn
 
 primary: INT
        | FLOAT

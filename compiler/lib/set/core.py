@@ -10,6 +10,7 @@ lookup = {
     ("delay", "ms"): "DELAY_MS",
     ("digital", "mode"): "DIGITAL_MODE",
     ("digital", "flip"): "DIGITAL_FLIP",
+    ("adc", "read"): "ADC_READ",
 }
 
 # Because the parent + child lookup

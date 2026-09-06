@@ -39,6 +39,9 @@ int main() {
         uart_initialize();
         digital_mode(12, 1);
         digital_flip(12, 0);
+
+        AD1CON1bits.ON = 1;
+        AD1CON2bits.VCFG = 0b000;
     #endif
 
     for (;;) {

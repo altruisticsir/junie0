@@ -30,6 +30,7 @@
 #define DELAY_MS 0x1AU
 #define DIGITAL_MODE 0x1BU
 #define DIGITAL_FLIP 0x1CU
+#define ADC_READ 0x1DU
 #if !defined(_WIN32) && !defined(__APPLE__)
 
 typedef struct {
@@ -39,8 +40,10 @@ typedef struct {
     volatile uint32_t *const tris_set;
     volatile uint32_t *const tris_clr;
     volatile uint32_t *const port;
+    volatile uint32_t *const ansel_set;
     volatile uint32_t *const ansel_clr;
     uint32_t mask;
+    int analog_channel;
 } pin_registers;
 
 static const pin_registers pin_map[] = {
@@ -51,8 +54,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISASET,
 		.tris_clr = &TRISACLR,
 		.port = &PORTA,
+		.ansel_set = &ANSELASET,
 		.ansel_clr = &ANSELACLR,
 		.mask = (1 << 0),
+		.analog_channel = 0,
 	},
 	{
 		.lat_set = &LATASET,
@@ -61,8 +66,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISASET,
 		.tris_clr = &TRISACLR,
 		.port = &PORTA,
+		.ansel_set = &ANSELASET,
 		.ansel_clr = &ANSELACLR,
 		.mask = (1 << 1),
+		.analog_channel = 1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -71,8 +78,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 0),
+		.analog_channel = 2,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -81,8 +90,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 1),
+		.analog_channel = 3,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -91,8 +102,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 2),
+		.analog_channel = 4,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -101,8 +114,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 3),
+		.analog_channel = 5,
 	},
 	{
 		.lat_set = &LATASET,
@@ -111,8 +126,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISASET,
 		.tris_clr = &TRISACLR,
 		.port = &PORTA,
+		.ansel_set = &ANSELASET,
 		.ansel_clr = &ANSELACLR,
 		.mask = (1 << 2),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATASET,
@@ -121,8 +138,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISASET,
 		.tris_clr = &TRISACLR,
 		.port = &PORTA,
+		.ansel_set = &ANSELASET,
 		.ansel_clr = &ANSELACLR,
 		.mask = (1 << 3),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -131,8 +150,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 4),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATASET,
@@ -141,8 +162,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISASET,
 		.tris_clr = &TRISACLR,
 		.port = &PORTA,
+		.ansel_set = &ANSELASET,
 		.ansel_clr = &ANSELACLR,
 		.mask = (1 << 4),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -151,8 +174,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 5),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -161,8 +186,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 7),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -171,8 +198,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 8),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -181,8 +210,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 9),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -191,8 +222,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 10),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -201,8 +234,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 11),
+		.analog_channel = -1,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -211,8 +246,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 13),
+		.analog_channel = 11,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -221,8 +258,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 14),
+		.analog_channel = 10,
 	},
 	{
 		.lat_set = &LATBSET,
@@ -231,8 +270,10 @@ static const pin_registers pin_map[] = {
 		.tris_set = &TRISBSET,
 		.tris_clr = &TRISBCLR,
 		.port = &PORTB,
+		.ansel_set = &ANSELBSET,
 		.ansel_clr = &ANSELBCLR,
 		.mask = (1 << 15),
+		.analog_channel = 9,
 	},
 };
 #endif

@@ -64,6 +64,34 @@
             *(pin->lat_inv) = pin->mask;
         }
     }
+
+    /**
+     * @brief Reads an analog input from
+     * a channel and converts it to a digital
+     * value.
+     * @param channel Channel; like pin (must be
+     * analog-able)
+     */
+    static int adc_read(int channel) {
+        const pin_registers *pin = &pin_map[channel];
+
+        /* Configure to analog and input mode */
+        if (pin->ansel_set) *(pin->ansel_set) = pin->mask;
+        *(pin->tris_set) = pin->mask;
+
+        /* Select the channel (sample A mux) */
+        AD1CHSbits.CH0SA = pin->analog_channel;
+
+        /* Enable sampling */
+        AD1CON1bits.SAMP = 1;
+        
+        /* Wait for acquisition time */
+        for (volatile int i = 0; i < 20; i++);
+        AD1CON1bits.SAMP = 0;
+
+        while (!AD1CON1bits.DONE);
+        return ADC1BUF0;
+    }
 #endif
 
 #endif
